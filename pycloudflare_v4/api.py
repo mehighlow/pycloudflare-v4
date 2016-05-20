@@ -4,6 +4,7 @@
 __title__ = 'pycloudflare-v4'
 __version__ = '0.1'
 __author__ = 'Michael Zaglada'
+__email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
 
 
@@ -130,3 +131,11 @@ class CloudFlare(object):
                     for i in dns_records['result']:
                         records[rt] = i
         return records
+
+    #  IPs (https://api.cloudflare.com/#cloudflare-ips-properties)
+    def cf_ips(self):
+        uri = "ips"
+        response = self.api_call_get(uri)
+        if response['success']:
+            ips = response['result']
+        return ips

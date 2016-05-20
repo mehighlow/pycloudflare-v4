@@ -4,4 +4,5 @@
 __title__ = 'pycloudflare-v4'
 __version__ = '0.1'
 __author__ = 'Michael Zaglada'
+__email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
