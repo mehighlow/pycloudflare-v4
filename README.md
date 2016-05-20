@@ -19,12 +19,34 @@ from pycloudflare_v4 import api
 
 def main():
 	cfapi = api.CloudFlare("email","api_token")
+
+    #  Get all zones
     zones = cfapi.get_zones()
     for z_name, z_details in zones.iteritems():
         zone_name = z_details['name']
         zone_id = z_details['id']
         zone_status = z_details['status']
         print zone_id, zone_name, zone_status
+
+    #  Purge cache for all zones
+    for k, v in zones.iteritems():
+        try:
+            purged = cfapi.purge_everything(v['id'])
+        except BaseException as e:
+            logging.critical(e)
+        finally:
+            logging.debug(purged)
+        if purged['success']:
+            print k, "[ SUCCESS ]"
+        else:
+            print purged['errors'][0]['message']
+
+    #  Get all DNS records
+    for k, v in zones.iteritems():
+        records = cfapi.dns_records(v['id'])
+        print k
+        for i, j in records.iteritems():
+            print i, j['content']
 
 if __name__ == '__main__':
 	main()
