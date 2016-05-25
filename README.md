@@ -53,7 +53,7 @@ def main():
         zone_id = z_details['id']
         zone_status = z_details['status']
         print zone_name, ": ", zone_status
-        print cfapi.get_zones_settings(zone_id)
+        print cfapi.get_all_zone_settings(zone_id)
 
 if __name__ == '__main__':
     main()

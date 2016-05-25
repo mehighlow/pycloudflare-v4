@@ -112,8 +112,11 @@ class CloudFlare(object):
         data = {"purge_everything": True}
         return self.api_call_delete(uri, data)
 
-    #  Zone Settings (https://api.cloudflare.com/#zone-settings)
-    def get_zones_settings(self, zone_id):
+    ################################################################
+    #  Zone Settings (https://api.cloudflare.com/#zone-settings)   #
+    ################################################################
+    #  Get all zone settings info
+    def get_all_zone_settings(self, zone_id):
         """
         This method returns human readable/scripting easy dictionary with all settings of a zone.
         :param zone_id:
@@ -126,7 +129,13 @@ class CloudFlare(object):
                 result[i['id']] = i
         return result
 
-    #  DNS (https://api.cloudflare.com/#dns-records-for-a-zone)
+    #  Edit zone settings info
+    def set_zone_settings(self, zone_id):
+        pass
+
+    ################################################################
+    #  DNS (https://api.cloudflare.com/#dns-records-for-a-zone)    #
+    ################################################################
     def dns_records(self, zone_id):
         """
         Returns an dictionary, where key is record type and value is dict with everything CF could return.
