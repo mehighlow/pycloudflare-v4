@@ -11,6 +11,7 @@ __license__ = 'MIT'
 import requests
 import json
 
+cf_api_url = "https://api.cloudflare.com/client/v4/"
 
 class CloudFlare(object):
     def __init__(self, email, token):
@@ -34,7 +35,7 @@ class CloudFlare(object):
     def api_call_get(self, url, data=None):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
         try:
-            r = requests.get('https://api.cloudflare.com/client/v4/' + url, data=json.dumps(data), headers=headers)
+            r = requests.get(cf_api_url + url, data=json.dumps(data), headers=headers)
         except (requests.ConnectionError,
                 requests.RequestException,
                 requests.HTTPError,
@@ -52,7 +53,7 @@ class CloudFlare(object):
     def api_call_post(self, url, data=None):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
         try:
-            r = requests.post('https://api.cloudflare.com/client/v4/' + url, data=json.dumps(data), headers=headers)
+            r = requests.post(cf_api_url + url, data=json.dumps(data), headers=headers)
         except (requests.ConnectionError,
                 requests.RequestException,
                 requests.HTTPError,
@@ -70,7 +71,7 @@ class CloudFlare(object):
     def api_call_delete(self, uri, data='{}'):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
         try:
-            r = requests.delete('https://api.cloudflare.com/client/v4/' + uri, data=json.dumps(data), headers=headers)
+            r = requests.delete(cf_api_url + uri, data=json.dumps(data), headers=headers)
         except (requests.ConnectionError,
                 requests.RequestException,
                 requests.HTTPError,
@@ -110,6 +111,20 @@ class CloudFlare(object):
         uri = "zones/" + str(zone_id) + "/purge_cache"
         data = {"purge_everything": True}
         return self.api_call_delete(uri, data)
+
+    #  Zone Settings (https://api.cloudflare.com/#zone-settings)
+    def get_zones_settings(self, zone_id):
+        """
+        This method returns human readable/scripting easy dictionary with all settings of a zone.
+        :param zone_id:
+        :return:
+        """
+        result = {}
+        response = self.api_call_get("zones/" + str(zone_id) + "/settings")
+        if response['success']:
+            for i in response['result']:
+                result[i['id']] = i
+        return result
 
     #  DNS (https://api.cloudflare.com/#dns-records-for-a-zone)
     def dns_records(self, zone_id):
