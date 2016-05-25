@@ -7,7 +7,6 @@ Python wrapper for CloudFlare API v4
 	$ git clone https://github.com/zmgit/pycloudflare-v4
 	$ cd pycloudflare-v4
 	$ sudo ./setup.py install
-	$
 ```
 
 ## Getting Started
@@ -18,7 +17,8 @@ A very simple listing of zones within your account; including the IPv6 status of
 from pycloudflare_v4 import api
 
 def main():
-	cfapi = api.CloudFlare("email","api_token")
+
+    cfapi = api.CloudFlare("email", "api_token")
 
     #  Get all zones
     zones = cfapi.get_zones()
@@ -33,13 +33,12 @@ def main():
         try:
             purged = cfapi.purge_everything(v['id'])
         except BaseException as e:
-            logging.critical(e)
+            print str(e)
         finally:
-            logging.debug(purged)
-        if purged['success']:
-            print k, "[ SUCCESS ]"
-        else:
-            print purged['errors'][0]['message']
+            if purged['success']:
+                print k, "[ SUCCESS ]"
+            else:
+                print purged['errors'][0]['message']
 
     #  Get all DNS records
     for k, v in zones.iteritems():
@@ -48,6 +47,14 @@ def main():
         for i, j in records.iteritems():
             print i, j['content']
 
+    #  Get zone settings
+    for z_name, z_details in zones.iteritems():
+        zone_name = z_details['name']
+        zone_id = z_details['id']
+        zone_status = z_details['status']
+        print zone_name, ": ", zone_status
+        print cfapi.get_zones_settings(zone_id)
+
 if __name__ == '__main__':
-	main()
+    main()
 ```
