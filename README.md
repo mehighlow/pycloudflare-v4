@@ -55,6 +55,14 @@ def main():
         print zone_name, ": ", zone_status
         print cfapi.get_all_zone_settings(zone_id)
 
+    #  Set zone settings
+    for z_name, z_details in zones.iteritems():
+        zone_name = z_details['name']
+        zone_id = z_details['id']
+        zone_status = z_details['status']
+        print zone_name, ": ", zone_status, zone_id
+        print cfapi.set_zone_settings(zone_id, email_obfuscation="off", hotlink_protection="off")
+
 if __name__ == '__main__':
     main()
 ```
