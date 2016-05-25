@@ -86,7 +86,28 @@ class CloudFlare(object):
             raise self.APIError(data['msg'])
         return data
 
-    #  Zone (https://api.cloudflare.com/#zone)
+    def api_call_patch(self, uri, data='{}'):
+        headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
+        try:
+            r = requests.patch(cf_api_url + uri, data=json.dumps(data), headers=headers)
+        except (requests.ConnectionError,
+                requests.RequestException,
+                requests.HTTPError,
+                requests.Timeout,
+                requests.TooManyRedirects) as e:
+                raise self.CONNError(str(e))
+        try:
+            data = json.loads(r.text)
+        except ValueError:
+            raise self.APIError('JSON parse failed.')
+        if data['result'] == 'error':
+            raise self.APIError(data['msg'])
+        return data
+
+    ################################################################
+    #  Zone (https://api.cloudflare.com/#zone)                     #
+    ################################################################
+    #  Get all zones
     def get_zones(self):
         """
         Returns an dictionary, where key is domain name and value is dict with everything CF could return,
@@ -102,6 +123,7 @@ class CloudFlare(object):
                     all_zones[i['name']] = i
         return all_zones
 
+    # Purge all cache for the zone
     def purge_everything(self, zone_id):
         """
         Deletes all cache in zone.
@@ -130,8 +152,19 @@ class CloudFlare(object):
         return result
 
     #  Edit zone settings info
-    def set_zone_settings(self, zone_id):
-        pass
+    def set_zone_settings(self, zone_id, email_obfuscation="on", hotlink_protection="on"):
+        uri = "/zones/{0}/settings/".format(zone_id)
+        data = {"items":
+                    [
+                        {"id": "email_obfuscation", "value": "{0}".format(email_obfuscation)},
+                        {"id": "hotlink_protection", "value": "{0}".format(hotlink_protection)},
+                    ]
+                }
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return set_settings['errors']
 
     ################################################################
     #  DNS (https://api.cloudflare.com/#dns-records-for-a-zone)    #
