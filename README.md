@@ -1,7 +1,7 @@
-# pycloudflare-v4
-Python wrapper for CloudFlare API v4
+# *pycloudflare-v4*
+A ***HUMAN READABLE*** and ***SCRIPTING EASY*** Python wrapper for CloudFlare API v4
 
-## Installation
+## *Installation*
 
 ```bash
 	$ git clone https://github.com/zmgit/pycloudflare-v4
@@ -9,7 +9,7 @@ Python wrapper for CloudFlare API v4
 	$ sudo ./setup.py install
 ```
 
-## Getting Started
+## *Getting Started*
 
 A very simple listing of zones within your account; including the IPv6 status of the zone.
 
