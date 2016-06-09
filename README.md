@@ -1,12 +1,25 @@
 # *pycloudflare-v4*
 A ***HUMAN READABLE*** and ***SCRIPTING EASY*** Python wrapper for CloudFlare API v4
 
+## *Current Version:*
+-  0.4
+
+## *Covered Methods:*
+
+- Zone:
+    - List zones (https://api.cloudflare.com/#zone-list-zones)
+    - Purge all files (https://api.cloudflare.com/#zone-purge-all-files)
+- Zone Settings:
+    - Get all Zone Settings (https://api.cloudflare.com/#zone-settings-properties)
+    - Set(Edit) any/all Zone Settings(https://api.cloudflare.com/#zone-settings-edit-zone-settings-info)
+
 ## *Installation*
 
 ```bash
-	$ git clone https://github.com/zmgit/pycloudflare-v4
-	$ cd pycloudflare-v4
-	$ sudo ./setup.py install
+$ pip install -r requirements.txt
+$ git clone https://github.com/zmgit/pycloudflare-v4
+$ cd pycloudflare-v4
+$ sudo ./setup.py install
 ```
 
 ## *Getting Started*
@@ -61,7 +74,7 @@ def main():
         zone_id = z_details['id']
         zone_status = z_details['status']
         print zone_name, ": ", zone_status, zone_id
-        print cfapi.set_zone_settings(zone_id, email_obfuscation="off", hotlink_protection="off")
+        print cfapi.set_zone_settings(zone_id, email_obfuscation="off", hotlink_protection="on")
 
 if __name__ == '__main__':
     main()
