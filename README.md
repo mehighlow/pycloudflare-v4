@@ -16,9 +16,9 @@ A ***HUMAN READABLE*** and ***SCRIPTING EASY*** Python wrapper for CloudFlare AP
 ## *Installation*
 
 ```bash
-$ pip install -r requirements.txt
 $ git clone https://github.com/zmgit/pycloudflare-v4
 $ cd pycloudflare-v4
+$ pip install -r requirements.txt
 $ sudo ./setup.py install
 ```
 
