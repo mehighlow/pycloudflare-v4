@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 __title__ = 'pycloudflare-v4'
-__version__ = '0.4'
+__version__ = '0.5'
 __author__ = 'Michael Zaglada'
 __email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
@@ -11,6 +11,7 @@ import json
 import requests
 
 cf_api_url = "https://api.cloudflare.com/client/v4/"
+
 
 class CloudFlare(object):
     def __init__(self, email, token):
@@ -118,6 +119,27 @@ class CloudFlare(object):
             raise self.APIError(data['msg'])
         return data
 
+    def api_call_put(self, uri, data='{}'):
+        headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
+        try:
+            r = requests.put(cf_api_url + uri, data=json.dumps(data), headers=headers)
+        except (requests.ConnectionError,
+                requests.RequestException,
+                requests.HTTPError,
+                requests.Timeout,
+                requests.TooManyRedirects) as e:
+                raise self.CONNError(str(e))
+        try:
+            data = json.loads(r.text)
+        except ValueError:
+            raise self.APIError('JSON parse failed.')
+        if data['result'] == 'error':
+            raise self.APIError(data['msg'])
+        elif data['errors']:
+            raise self.APIError(str(data['errors']))
+        return data
+
+
     ################################################################
     #  Zone (https://api.cloudflare.com/#zone)                     #
     ################################################################
@@ -203,8 +225,7 @@ class CloudFlare(object):
                           sort_query_string_for_cache=False,
                           cache_level=False,
                           http2=False,
-                          development_mode=False
-                          ):
+                          development_mode=False):
         """
         This method edits zone settings. You can edit one setting or all at ones.
         Some settings are editable only in paid plans.
@@ -303,13 +324,13 @@ class CloudFlare(object):
     ################################################################
     def dns_records(self, zone_id):
         """
-        Returns an dictionary, where key is record type and value is dict with everything CF could return.
+        Returns list of records. Each record is the dict with everything CF could return.
         :param zone_id:
-        :return: dict
+        :return: list
         """
         record_types = ["A", "AAAA", "CNAME", "TXT", "SRV", "LOC", "MX", "NS", "SPF"]  # all available record types
         page = 1  # initial page to start with
-        records = {}
+        records = []
         for rt in record_types:
             uri = "zones/" + str(zone_id) + "/dns_records?type={type}&page={page}&per_page=100".format(type=rt,
                                                                                                        page=page)
@@ -318,10 +339,43 @@ class CloudFlare(object):
                 dns_records = self.api_call_get(uri, page)
                 if dns_records['success']:
                     for i in dns_records['result']:
-                        records[rt] = i
+                        records.append(i)
         return records
 
-    #  IPs (https://api.cloudflare.com/#cloudflare-ips-properties)
+    # Update record (https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record)
+    def dns_records_update(self, zone_id, record_id,
+                           proxied=False,
+                           content=False,
+                           name=False,
+                           ttl=False):
+        uri = "zones/" + str(zone_id) + "/dns_records/" + str(record_id)
+        change_list = dict()
+        change_list['proxied'] = proxied if proxied in (False, 'false', 'true') else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: ("false", "true" in quotes!)')
+        change_list['content'] = content
+        change_list['name'] = name
+        change_list['ttl'] = ttl if ttl in (False, 1, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200) else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (1 - Automatic, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200)')
+
+        #  First, fetch data for the record
+        for i in self.dns_records(zone_id):
+            if i['id'] == record_id:
+                original_data = i
+
+        data = original_data
+
+        for k, v in change_list.iteritems():
+            if k == 'proxied' and v:
+                data[k] = json.loads(v)  # escape for true/false in proxied settings
+            elif v:
+                data[k] = v
+
+        return self.api_call_put(uri, data)
+
+    # Delete record ()
+    def dns_records_delete(self, zone_id, record_id):
+        url = ""
+        pass
+
+    # CloudFlare IPs (https://api.cloudflare.com/#cloudflare-ips-properties)
     def cf_ips(self):
         uri = "ips"
         response = self.api_call_get(uri)
