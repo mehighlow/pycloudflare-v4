@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 __title__ = 'pycloudflare-v4'
-__version__ = '0.5'
+__version__ = '0.6'
 __author__ = 'Michael Zaglada'
 __email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
@@ -322,6 +322,8 @@ class CloudFlare(object):
     ################################################################
     #  DNS (https://api.cloudflare.com/#dns-records-for-a-zone)    #
     ################################################################
+
+    # List DNS records (https://api.cloudflare.com/#dns-records-for-a-zone-list-dns-records)
     def dns_records(self, zone_id):
         """
         Returns list of records. Each record is the dict with everything CF could return.
@@ -341,6 +343,17 @@ class CloudFlare(object):
                     for i in dns_records['result']:
                         records.append(i)
         return records
+
+    # Create record (https://api.cloudflare.com/#dns-records-for-a-zone-create-dns-record)
+    def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1):
+        uri = "zones/" + str(zone_id) + "/dns_records/"
+        data = {"type": record_type, "name": record_name, "content": record_content, "ttl": record_ttl}
+        create_record = self.api_call_post(uri, data)
+
+        if create_record['success']:
+            return create_record['result']
+        else:
+            return "Error", create_record['errors']
 
     # Update record (https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record)
     def dns_records_update(self, zone_id, record_id,
@@ -375,7 +388,9 @@ class CloudFlare(object):
         url = ""
         pass
 
-    # CloudFlare IPs (https://api.cloudflare.com/#cloudflare-ips-properties)
+    ##########################################################################
+    # CloudFlare IPs (https://api.cloudflare.com/#cloudflare-ips-properties) #
+    ##########################################################################
     def cf_ips(self):
         uri = "ips"
         response = self.api_call_get(uri)
