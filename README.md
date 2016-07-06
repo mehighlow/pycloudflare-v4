@@ -2,7 +2,7 @@
 A ***HUMAN READABLE*** and ***SCRIPTING EASY*** Python wrapper for CloudFlare API v4
 
 ## *Current Version:*
--  0.5
+-  0.6
 
 ## *Covered Methods:*
 
@@ -13,7 +13,8 @@ A ***HUMAN READABLE*** and ***SCRIPTING EASY*** Python wrapper for CloudFlare AP
     - Get all Zone Settings (https://api.cloudflare.com/#zone-settings-properties)
     - Set(Edit) any/all Zone Settings(https://api.cloudflare.com/#zone-settings-edit-zone-settings-info)
 - DNS Records for a Zone:
-    - List DNS Records(https://api.cloudflare.com/#dns-records-for-a-zone-list-dns-records)
+    - List DNS records(https://api.cloudflare.com/#dns-records-for-a-zone-list-dns-records)
+    - Create DNS record(https://api.cloudflare.com/#dns-records-for-a-zone-create-dns-record)
     - Update DNS record(https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record)
 
 ## *Installation*
@@ -62,6 +63,10 @@ def main():
         print k
         for i in records:
             print i['name'], i['type'], i['id']
+
+    # Create DNS record
+    print cfapi.dns_records_create(zone_id=zone_id, record_type="A", record_name="test",
+                                   record_content="1.1.1.1")
 
     # Update DNS record
     for k, v in zones.iteritems():
