@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 __title__ = 'pycloudflare-v4'
-__version__ = '0.6'
+__version__ = '0.6.1'
 __author__ = 'Michael Zaglada'
 __email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
@@ -152,9 +152,9 @@ class CloudFlare(object):
         :return: dict
         """
         all_zones = {}
-        for p in xrange(self.api_call_get("zones")['result_info']['total_pages']):
-            page = p + 1
-            zones = self.api_call_get("zones&per_page=50", page)
+        pages = self.api_call_get("zones")['result_info']['total_pages']
+        for p in xrange(pages):
+            zones = self.api_call_get("zones&page={0}&per_page=50".format(p))
             if zones['success']:
                 for i in zones['result']:
                     all_zones[i['name']] = i
