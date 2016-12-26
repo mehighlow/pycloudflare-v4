@@ -10,6 +10,11 @@ __license__ = 'MIT'
 import json
 import requests
 
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+
 cf_api_url = "https://api.cloudflare.com/client/v4/"
 
 
@@ -105,6 +110,8 @@ class CloudFlare(object):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
         try:
             r = requests.patch(cf_api_url + uri, data=json.dumps(data), headers=headers)
+            logging.debug(r)
+            logging.debug(json.dumps(data))
         except (requests.ConnectionError,
                 requests.RequestException,
                 requests.HTTPError,
@@ -189,129 +196,68 @@ class CloudFlare(object):
                 result[i['id']] = i
         return result
 
-    #  Edit zone settings info
-    def set_zone_settings(self, zone_id,
-                          challenge_ttl=False,
-                          email_obfuscation=False,
-                          true_client_ip_header=False,
-                          pseudo_ipv4=False,
-                          prefetch_preload=False,
-                          mirage=False,
-                          polish=False,
-                          mobile_redirect=False,
-                          websockets=False,
-                          response_buffering=False,
-                          cname_flattening=False,
-                          max_upload=False,
-                          waf=False,
-                          hotlink_protection=False,
-                          server_side_exclude=False,
-                          advanced_ddos=False,
-                          ipv6=False,
-                          tls_1_2_only=False,
-                          always_online=False,
-                          sha1_support=False,
-                          minify=False,
-                          security_level=False,
-                          origin_error_page_pass_thru=False,
-                          edge_cache_ttl=False,
-                          tls_client_auth=False,
-                          ssl=False,
-                          browser_cache_ttl=False,
-                          ip_geolocation=False,
-                          browser_check=False,
-                          security_header=False,
-                          rocket_loader=False,
-                          sort_query_string_for_cache=False,
-                          cache_level=False,
-                          http2=False,
-                          development_mode=False):
+
+    # CHANGE
+    def change_always_online_setting(self, zone_id, always_online):
         """
-        This method edits zone settings. You can edit one setting or all at ones.
-        Some settings are editable only in paid plans.
+
         :param zone_id:
-        :param challenge_ttl:
-        :param email_obfuscation: on/off
-        :param true_client_ip_header:
-        :param pseudo_ipv4:
-        :param prefetch_preload:
-        :param mirage:
-        :param polish:
-        :param mobile_redirect:
-        :param websockets:
-        :param response_buffering:
-        :param cname_flattening:
-        :param max_upload:
-        :param waf:
-        :param hotlink_protection: on/off
-        :param server_side_exclude: on/off
-        :param advanced_ddos:
-        :param ipv6:
-        :param tls_1_2_only:
         :param always_online:
-        :param sha1_support:
-        :param minify:
-        :param security_level:
-        :param origin_error_page_pass_thru:
-        :param edge_cache_ttl:
-        :param tls_client_auth:
-        :param ssl:
-        :param browser_cache_ttl:
-        :param ip_geolocation:
-        :param browser_check:
-        :param security_header:
-        :param rocket_loader:
-        :param sort_query_string_for_cache:
-        :param cache_level: aggressive/basic/simplified
-        :param http2:
-        :param development_mode: on/off
         :return:
         """
 
-        uri = "zones/{0}/settings/".format(zone_id)
+        uri = "zones/{0}/settings/always_online".format(zone_id)
 
-        change_list = dict()
-        change_list['challenge_ttl'] = challenge_ttl if challenge_ttl in (False, 300, 900, 1800, 2700, 3600, 7200, 10800, 14400, 28800, 57600, 86400, 604800, 2592000, 31536000) else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (300, 900, 1800, 2700, 3600, 7200, 10800, 14400, 28800, 57600, 86400, 604800, 2592000, 31536000)')
-        change_list['email_obfuscation'] = email_obfuscation if email_obfuscation in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['true_client_ip_header'] = true_client_ip_header if true_client_ip_header in (False, "on", "off") else self.halt('FREE(N), PRO(N), BUSINESS(N), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['pseudo_ipv4'] = pseudo_ipv4 if pseudo_ipv4 in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['prefetch_preload'] = prefetch_preload if prefetch_preload in (False, "on", "off") else self.halt('FREE(N), PRO(N), BUSINESS(N), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['mirage'] = mirage if mirage in (False, "on", "off") else self.halt('FREE(N), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['polish'] = polish if polish in (False, "off", "lossless", "lossy") else self.halt('FREE(N), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (off, lossless, lossy)')
-        # change_list['mobile_redirect'] = mobile_redirect if mobile_redirect in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        # change_list['websockets'] = websockets
-        change_list['response_buffering'] = response_buffering if response_buffering in (False, "on", "off") else self.halt('FREE(N), PRO(N), BUSINESS(N), ENTERPRISE(Y); valid values: (on, off)')
-        # change_list['cname_flattening'] = cname_flattening
-        # change_list['max_upload'] = max_upload
-        # change_list['waf'] = waf
-        change_list['hotlink_protection'] = hotlink_protection if hotlink_protection in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['server_side_exclude'] = server_side_exclude if server_side_exclude in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        # change_list['advanced_ddos'] = advanced_ddos
-        change_list['ipv6'] = ipv6 if ipv6 in (False, "on", "off", "safe") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off, safe)')
-        change_list['tls_1_2_only'] = tls_1_2_only if tls_1_2_only in (False, "on", "off") else self.halt('FREE(N), PRO(N), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        # change_list['always_online'] = always_online
-        # change_list['sha1_support'] = sha1_support
-        # change_list['minify'] = minify
-        change_list['security_level'] = security_level if security_level in (False, "essentially_off", "low", "medium", "high", "under_attack") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (essentially_off, low, medium, high, under_attack)')
-        change_list['origin_error_page_pass_thru'] = origin_error_page_pass_thru if origin_error_page_pass_thru in (False, "on", "off") else self.halt('FREE(N), PRO(N), BUSINESS(N), ENTERPRISE(Y); valid values: (on, off)')
-        # change_list['edge_cache_ttl'] = edge_cache_ttl
-        # change_list['tls_client_auth'] = tls_client_auth
-        change_list['ssl'] = ssl if ssl in (False, "off", "flexible", "full", "full_strict") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (off, flexible, full, full_strict)')
-        change_list['browser_cache_ttl'] = browser_cache_ttl if browser_cache_ttl in (False, 30, 60, 300, 1200, 1800, 3600, 7200, 10800, 14400, 18000, 28800, 43200, 57600, 72000, 86400, 172800, 259200, 345600, 432000, 691200, 1382400, 2073600, 2678400, 5356800, 16070400, 31536000) else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (30, 60, 300, 1200, 1800, 3600, 7200, 10800, 14400, 18000, 28800, 43200, 57600, 72000, 86400, 172800, 259200, 345600, 432000, 691200, 1382400, 2073600, 2678400, 5356800, 16070400, 31536000)')
-        change_list['ip_geolocation'] = ip_geolocation if ip_geolocation in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['browser_check'] = browser_check if browser_check in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
-        # change_list['security_header'] = security_header
-        change_list['rocket_loader'] = rocket_loader if rocket_loader in (False, "on", "off", "manual") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off, manual)')
-        change_list['sort_query_string_for_cache'] = sort_query_string_for_cache if sort_query_string_for_cache in (False, "on", "off") else self.halt('FREE(N), PRO(N), BUSINESS(N), ENTERPRISE(Y); valid values: (on, off)')
-        change_list['cache_level'] = cache_level if cache_level in (False, "aggressive", "basic", "simplified") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (aggressive, basic, simplified)')
-        # change_list['http2'] = http2
-        change_list['development_mode'] = development_mode if development_mode in (False, "on", "off") else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (on, off)')
+        set_always_online = always_online if always_online in ("on", "off") else self.halt('FREE(Y),'
+                                                                                           ' PRO(Y),'
+                                                                                           ' BUSINESS(Y),'
+                                                                                           ' ENTERPRISE(Y);'
+                                                                                           ' valid values: (on, off)')
 
-        data = {"items": []}
+        data = {"value": "{0}".format(set_always_online)}
 
-        for k, v in change_list.iteritems():
-            if v:
-                data["items"].append({"id": "{settings}".format(settings=k), "value": "{value}".format(value=v)})
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_automatic_https_rewrites_setting(self, zone_id, automatic_https_rewrites):
+        """
+        https://api.cloudflare.com/#zone-settings-change-automatic-https-rewrites-setting
+        :param zone_id:
+        :param automatic_https_rewrites:
+        :return:
+        """
+
+        uri = "zones/{0}/settings/automatic_https_rewrites".format(zone_id)
+
+
+        set_automatic_https_rewrites = automatic_https_rewrites if automatic_https_rewrites in ("on", "off") else self.halt('FREE(Y),'
+                                                                                           ' PRO(Y),'
+                                                                                           ' BUSINESS(Y),'
+                                                                                           ' ENTERPRISE(Y);'
+                                                                                           ' valid values: (on, off)')
+
+        data = {"value": "{0}".format(set_automatic_https_rewrites)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_browser_cache_ttl_setting(self, zone_id, browser_cache_ttl):
+
+        uri = "zones/{0}/settings/browser_cache_ttl".format(zone_id)
+
+        set_browser_cache_ttl = browser_cache_ttl if browser_cache_ttl in (30, 60, 300, 1200, 1800, 3600, 7200, 10800,
+                                                                           14400, 18000, 28800, 43200, 57600, 72000,
+                                                                           86400, 172800, 259200, 345600, 432000,
+                                                                           691200, 1382400, 2073600, 2678400, 5356800,
+                                                                           16070400, 31536000) else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (30, 60, 300, 1200, 1800, 3600, 7200, 10800, 14400, 18000, 28800, 43200, 57600, 72000, 86400, 172800, 259200, 345600, 432000, 691200, 1382400, 2073600, 2678400, 5356800, 16070400, 31536000)')
+
+        data = {"value": set_browser_cache_ttl}
 
         set_settings = self.api_call_patch(uri, data)
         if set_settings['success']:
