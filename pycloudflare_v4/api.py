@@ -268,7 +268,7 @@ class CloudFlare(object):
         :return:
         """
 
-        uri = "/zones/{0}/settings/".format(zone_id)
+        uri = "zones/{0}/settings/".format(zone_id)
 
         change_list = dict()
         change_list['challenge_ttl'] = challenge_ttl if challenge_ttl in (False, 300, 900, 1800, 2700, 3600, 7200, 10800, 14400, 28800, 57600, 86400, 604800, 2592000, 31536000) else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (300, 900, 1800, 2700, 3600, 7200, 10800, 14400, 28800, 57600, 86400, 604800, 2592000, 31536000)')
