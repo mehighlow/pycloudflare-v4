@@ -2,17 +2,13 @@
 # -*- coding: UTF-8 -*-
 
 __title__ = 'pycloudflare-v4'
-__version__ = '0.6.1'
+__version__ = '0.7.0'
 __author__ = 'Michael Zaglada'
 __email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
 
 import json
 import requests
-
-
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
 
 cf_api_url = "https://api.cloudflare.com/client/v4/"
@@ -97,7 +93,7 @@ class CloudFlare(object):
                 requests.HTTPError,
                 requests.Timeout,
                 requests.TooManyRedirects) as e:
-                raise self.CONNError(str(e))
+            raise self.CONNError(str(e))
         try:
             data = json.loads(r.text)
         except ValueError:
@@ -110,14 +106,12 @@ class CloudFlare(object):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
         try:
             r = requests.patch(cf_api_url + uri, data=json.dumps(data), headers=headers)
-            logging.debug(r)
-            logging.debug(json.dumps(data))
         except (requests.ConnectionError,
                 requests.RequestException,
                 requests.HTTPError,
                 requests.Timeout,
                 requests.TooManyRedirects) as e:
-                raise self.CONNError(str(e))
+            raise self.CONNError(str(e))
         try:
             data = json.loads(r.text)
         except ValueError:
@@ -135,7 +129,7 @@ class CloudFlare(object):
                 requests.HTTPError,
                 requests.Timeout,
                 requests.TooManyRedirects) as e:
-                raise self.CONNError(str(e))
+            raise self.CONNError(str(e))
         try:
             data = json.loads(r.text)
         except ValueError:
@@ -145,7 +139,6 @@ class CloudFlare(object):
         elif data['errors']:
             raise self.APIError(str(data['errors']))
         return data
-
 
     ################################################################
     #  Zone (https://api.cloudflare.com/#zone)                     #
@@ -196,23 +189,24 @@ class CloudFlare(object):
                 result[i['id']] = i
         return result
 
-
-    # CHANGE
     def change_always_online_setting(self, zone_id, always_online):
         """
-
+        https://api.cloudflare.com/#zone-settings-change-always-online-setting
         :param zone_id:
         :param always_online:
         :return:
         """
 
         uri = "zones/{0}/settings/always_online".format(zone_id)
+        valid_values = ["default", "on", "off"]
 
-        set_always_online = always_online if always_online in ("on", "off") else self.halt('FREE(Y),'
-                                                                                           ' PRO(Y),'
-                                                                                           ' BUSINESS(Y),'
-                                                                                           ' ENTERPRISE(Y);'
-                                                                                           ' valid values: (on, off)')
+        if always_online not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if always_online == "default":
+            set_always_online = "on"
+        else:
+            set_always_online = always_online
 
         data = {"value": "{0}".format(set_always_online)}
 
@@ -232,12 +226,10 @@ class CloudFlare(object):
 
         uri = "zones/{0}/settings/automatic_https_rewrites".format(zone_id)
 
-
-        set_automatic_https_rewrites = automatic_https_rewrites if automatic_https_rewrites in ("on", "off") else self.halt('FREE(Y),'
-                                                                                           ' PRO(Y),'
-                                                                                           ' BUSINESS(Y),'
-                                                                                           ' ENTERPRISE(Y);'
-                                                                                           ' valid values: (on, off)')
+        if automatic_https_rewrites == "default":
+            set_automatic_https_rewrites = "off"
+        else:
+            set_automatic_https_rewrites = automatic_https_rewrites
 
         data = {"value": "{0}".format(set_automatic_https_rewrites)}
 
@@ -248,14 +240,25 @@ class CloudFlare(object):
             return "Error", set_settings['errors']
 
     def change_browser_cache_ttl_setting(self, zone_id, browser_cache_ttl):
+        """
+        https://api.cloudflare.com/#zone-settings-change-browser-cache-ttl-setting
+        :param zone_id:
+        :param browser_cache_ttl:
+        :return:
+        """
 
         uri = "zones/{0}/settings/browser_cache_ttl".format(zone_id)
+        valid_values = ["default", 30, 60, 300, 1200, 1800, 3600, 7200, 10800, 14400, 18000,
+                        28800, 43200, 57600, 72000, 86400, 172800, 259200, 345600, 432000,
+                        691200, 1382400, 2073600, 2678400, 5356800, 16070400, 31536000]
 
-        set_browser_cache_ttl = browser_cache_ttl if browser_cache_ttl in (30, 60, 300, 1200, 1800, 3600, 7200, 10800,
-                                                                           14400, 18000, 28800, 43200, 57600, 72000,
-                                                                           86400, 172800, 259200, 345600, 432000,
-                                                                           691200, 1382400, 2073600, 2678400, 5356800,
-                                                                           16070400, 31536000) else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (30, 60, 300, 1200, 1800, 3600, 7200, 10800, 14400, 18000, 28800, 43200, 57600, 72000, 86400, 172800, 259200, 345600, 432000, 691200, 1382400, 2073600, 2678400, 5356800, 16070400, 31536000)')
+        if browser_cache_ttl not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if browser_cache_ttl == "default":
+            set_browser_cache_ttl = 14400
+        else:
+            set_browser_cache_ttl = browser_cache_ttl
 
         data = {"value": set_browser_cache_ttl}
 
@@ -264,6 +267,193 @@ class CloudFlare(object):
             return set_settings['result']
         else:
             return "Error", set_settings['errors']
+
+    def change_browser_check_setting(self, zone_id, browser_check):
+        """
+        https://api.cloudflare.com/#zone-settings-change-browser-check-setting
+        :param zone_id:
+        :param browser_check:
+        :return:
+        """
+        uri = "zones/{0}/settings/browser_check".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if browser_check not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if browser_check == "default":
+            set_browser_check = "on"
+        else:
+            set_browser_check = browser_check
+
+        data = {"value": "{0}".format(set_browser_check)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_cache_level_setting(self, zone_id, cache_level):
+        """
+        https://api.cloudflare.com/#zone-settings-change-cache-level-setting
+        :param zone_id:
+        :param cache_level:
+        :return:
+        """
+        uri = "zones/{0}/settings/cache_level".format(zone_id)
+        valid_values = ["default", "aggressive", "basic", "simplified"]
+
+        if cache_level not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if cache_level == "default":
+            set_cache_level = "aggressive"
+        else:
+            set_cache_level = cache_level
+
+        data = {"value": "{0}".format(set_cache_level)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_challenge_ttl_setting(self, zone_id, challenge_ttl):
+        """
+        https://api.cloudflare.com/#zone-settings-change-challenge-ttl-setting
+        :param zone_id:
+        :param challenge_ttl:
+        :return:
+        """
+
+        uri = "zones/{0}/settings/challenge_ttl".format(zone_id)
+        valid_values = ["default", 300, 900, 1800, 2700, 3600, 7200, 10800, 14400,
+                        28800, 57600, 86400, 604800, 2592000, 31536000]
+
+        if challenge_ttl not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if challenge_ttl == "default":
+            set_challenge_ttl = 1800
+        else:
+            set_challenge_ttl = challenge_ttl
+
+        data = {"value": set_challenge_ttl}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_development_mode_setting(self, zone_id, development_mode):
+        """
+        https://api.cloudflare.com/#zone-settings-change-development-mode-setting
+        :param zone_id:
+        :param development_mode:
+        :return:
+        """
+        uri = "zones/{0}/settings/development_mode".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if development_mode not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if development_mode == "default":
+            set_development_mode = "off"
+        else:
+            set_development_mode = development_mode
+
+        data = {"value": "{0}".format(set_development_mode)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_email_obfuscation_setting(self, zone_id, email_obfuscation):
+        """
+        https://api.cloudflare.com/#zone-settings-change-email-obfuscation-setting
+        :param zone_id:
+        :param email_obfuscation:
+        :return:
+        """
+        uri = "zones/{0}/settings/email_obfuscation".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if email_obfuscation not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if email_obfuscation == "default":
+            set_email_obfuscation = "on"
+        else:
+            set_email_obfuscation = email_obfuscation
+
+        data = {"value": "{0}".format(set_email_obfuscation)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_origin_error_page_pass_thru_setting(self, zone_id, origin_error_page_pass_thru):
+        """
+        https://api.cloudflare.com/#zone-settings-change-enable-error-pages-on-setting
+        :param zone_id:
+        :param origin_error_page_pass_thru:
+        :return:
+        """
+        uri = "zones/{0}/settings/origin_error_page_pass_thru".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if origin_error_page_pass_thru not in valid_values:
+            self.halt('valid values: ("{0}".format(valid_values))')
+
+        if origin_error_page_pass_thru == "default":
+            set_origin_error_page_pass_thru = "off"
+        else:
+            set_origin_error_page_pass_thru = origin_error_page_pass_thru
+
+        data = {"value": "{0}".format(set_origin_error_page_pass_thru)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+
+
+#TODO
+# sort_query_string_for_cache
+# hotlink_protection
+# ip_geolocation
+# ipv6
+# minify
+# mobile_redirect
+# mirage
+# opportunistic_encryption
+# polish
+# prefetch_preload
+# response_buffering
+# rocket_loader
+# security_header
+# security_level
+# server_side_exclude
+# ssl
+# tls_client_auth
+# true_client_ip_header
+# tls_1_2_only
+# tls_1_3
+# waf
+# websockets
+
+
+
 
     ################################################################
     #  DNS (https://api.cloudflare.com/#dns-records-for-a-zone)    #
@@ -309,10 +499,13 @@ class CloudFlare(object):
                            ttl=False):
         uri = "zones/" + str(zone_id) + "/dns_records/" + str(record_id)
         change_list = dict()
-        change_list['proxied'] = proxied if proxied in (False, 'false', 'true') else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: ("false", "true" in quotes!)')
+        change_list['proxied'] = proxied if proxied in (False, 'false', 'true') else self.halt(
+            'FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: ("false", "true" in quotes!)')
         change_list['content'] = content
         change_list['name'] = name
-        change_list['ttl'] = ttl if ttl in (False, 1, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200) else self.halt('FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (1 - Automatic, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200)')
+        change_list['ttl'] = ttl if ttl in (
+        False, 1, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200) else self.halt(
+            'FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (1 - Automatic, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200)')
 
         #  First, fetch data for the record
         for i in self.dns_records(zone_id):
