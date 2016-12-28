@@ -9,9 +9,6 @@ __license__ = 'MIT'
 
 import json
 import requests
-import logging
-logging.basicConfig(level=logging.CRITICAL)
-
 
 cf_api_url = "https://api.cloudflare.com/client/v4/"
 
@@ -731,7 +728,7 @@ class CloudFlare(object):
         else:
             return "Error", set_settings['errors']
 
-    def change_ssecurity_level_setting(self, zone_id, security_level):
+    def change_security_level_setting(self, zone_id, security_level):
         """
         https://api.cloudflare.com/#zone-settings-change-security-level-setting
         :param zone_id:
