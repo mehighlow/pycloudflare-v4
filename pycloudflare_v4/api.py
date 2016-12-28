@@ -9,6 +9,8 @@ __license__ = 'MIT'
 
 import json
 import requests
+import logging
+logging.basicConfig(level=logging.CRITICAL)
 
 
 cf_api_url = "https://api.cloudflare.com/client/v4/"
@@ -20,33 +22,13 @@ class CloudFlare(object):
         self.TOKEN = token
 
     class CONNError(Exception):
-        def __init__(self, value):
-            self.value = value
-
-        def __str__(self):
-            return self.value
+        pass
 
     class APIError(Exception):
-        def __init__(self, value):
-            self.value = value
-
-        def __str__(self):
-            return self.value
+        pass
 
     class WRAPPERError(Exception):
-        def __init__(self, value):
-            self.value = value
-
-        def __str__(self):
-            return self.value
-
-    def halt(self, error_message):
-        """
-        Short method to raise error in one liner 'if else'
-        :param error_message:
-        :return:
-        """
-        raise self.WRAPPERError(error_message)
+        pass
 
     def api_call_get(self, url, data=None):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
@@ -201,7 +183,7 @@ class CloudFlare(object):
         valid_values = ["default", "on", "off"]
 
         if always_online not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if always_online == "default":
             set_always_online = "on"
@@ -253,7 +235,7 @@ class CloudFlare(object):
                         691200, 1382400, 2073600, 2678400, 5356800, 16070400, 31536000]
 
         if browser_cache_ttl not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if browser_cache_ttl == "default":
             set_browser_cache_ttl = 14400
@@ -279,7 +261,7 @@ class CloudFlare(object):
         valid_values = ["default", "on", "off"]
 
         if browser_check not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if browser_check == "default":
             set_browser_check = "on"
@@ -305,7 +287,7 @@ class CloudFlare(object):
         valid_values = ["default", "aggressive", "basic", "simplified"]
 
         if cache_level not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if cache_level == "default":
             set_cache_level = "aggressive"
@@ -333,7 +315,7 @@ class CloudFlare(object):
                         28800, 57600, 86400, 604800, 2592000, 31536000]
 
         if challenge_ttl not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if challenge_ttl == "default":
             set_challenge_ttl = 1800
@@ -359,7 +341,7 @@ class CloudFlare(object):
         valid_values = ["default", "on", "off"]
 
         if development_mode not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if development_mode == "default":
             set_development_mode = "off"
@@ -385,7 +367,7 @@ class CloudFlare(object):
         valid_values = ["default", "on", "off"]
 
         if email_obfuscation not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if email_obfuscation == "default":
             set_email_obfuscation = "on"
@@ -411,7 +393,7 @@ class CloudFlare(object):
         valid_values = ["default", "on", "off"]
 
         if origin_error_page_pass_thru not in valid_values:
-            self.halt('valid values: ("{0}".format(valid_values))')
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
         if origin_error_page_pass_thru == "default":
             set_origin_error_page_pass_thru = "off"
@@ -426,34 +408,549 @@ class CloudFlare(object):
         else:
             return "Error", set_settings['errors']
 
+    def change_sort_query_string_for_cache_setting(self, zone_id, sort_query_string_for_cache):
+        """
+        https://api.cloudflare.com/#zone-settings-change-enable-query-string-sort-setting
+        :param zone_id:
+        :param sort_query_string_for_cache:
+        :return:
+        """
+        uri = "zones/{0}/settings/sort_query_string_for_cache".format(zone_id)
+        valid_values = ["default", "on", "off"]
 
+        if sort_query_string_for_cache not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
 
-#TODO
-# sort_query_string_for_cache
-# hotlink_protection
-# ip_geolocation
-# ipv6
-# minify
-# mobile_redirect
-# mirage
-# opportunistic_encryption
-# polish
-# prefetch_preload
-# response_buffering
-# rocket_loader
-# security_header
-# security_level
-# server_side_exclude
-# ssl
-# tls_client_auth
-# true_client_ip_header
-# tls_1_2_only
-# tls_1_3
-# waf
-# websockets
+        if sort_query_string_for_cache == "default":
+            set_sort_query_string_for_cache = "off"
+        else:
+            set_sort_query_string_for_cache = sort_query_string_for_cache
 
+        data = {"value": "{0}".format(set_sort_query_string_for_cache)}
 
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
 
+    def change_hotlink_protection_setting(self, zone_id, hotlink_protection):
+        """
+        https://api.cloudflare.com/#zone-settings-change-hotlink-protection-setting
+        :param zone_id:
+        :param hotlink_protection:
+        :return:
+        """
+        uri = "zones/{0}/settings/hotlink_protection".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if hotlink_protection not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if hotlink_protection == "default":
+            set_hotlink_protection = "off"
+        else:
+            set_hotlink_protection = hotlink_protection
+
+        data = {"value": "{0}".format(set_hotlink_protection)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_ip_geolocation_setting(self, zone_id, ip_geolocation):
+        """
+        https://api.cloudflare.com/#zone-settings-change-ip-geolocation-setting
+        :param zone_id:
+        :param hotlink_protection:
+        :return:
+        """
+        uri = "zones/{0}/settings/hotlink_protection".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if ip_geolocation not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if ip_geolocation == "default":
+            set_ip_geolocation = "on"
+        else:
+            set_ip_geolocation = ip_geolocation
+
+        data = {"value": "{0}".format(set_ip_geolocation)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_ipv6_setting(self, zone_id, ipv6):
+        """
+        https://api.cloudflare.com/#zone-settings-change-ipv6-setting
+        :param zone_id:
+        :param ipv6:
+        :return:
+        """
+        uri = "zones/{0}/settings/ipv6".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if ipv6 not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if ipv6 == "default":
+            set_ipv6 = "off"
+        else:
+            set_ipv6 = ipv6
+
+        data = {"value": "{0}".format(set_ipv6)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_minify_setting(self, zone_id, minify):
+        """
+        https://api.cloudflare.com/#zone-settings-change-minify-setting
+        :param zone_id:
+        :param minify:
+        :return:
+        """
+        uri = "zones/{0}/settings/minify".format(zone_id)
+
+        if minify == "default":
+            set_minify = {"css":"off","html":"off","js":"off"}
+        else:
+            set_minify = minify
+
+        data = {"value": "{0}".format(set_minify)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_mobile_redirect_setting(self, zone_id, mobile_redirect):
+        """
+        https://api.cloudflare.com/#zone-settings-change-mobile-redirect-setting
+        :param zone_id:
+        :param mobile_redirect:
+        :return:
+        """
+        uri = "zones/{0}/settings/mirage".format(zone_id)
+
+        if mobile_redirect == "default":
+            set_mobile_redirect = '{"status": "off", "mobile_subdomain": "m", "strip_uri": false}'
+        else:
+            set_mobile_redirect = mobile_redirect
+
+        data = {"value": "{0}".format(set_mobile_redirect)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_mirage_setting(self, zone_id, mirage):
+        """
+        https://api.cloudflare.com/#zone-settings-change-mirage-setting
+        :param zone_id:
+        :param mirage:
+        :return:
+        """
+        uri = "zones/{0}/settings/mirage".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if mirage not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if mirage == "default":
+            set_mirage = "off"
+        else:
+            set_mirage = mirage
+
+        data = {"value": "{0}".format(set_mirage)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_opportunistic_encryption_setting(self, zone_id, opportunistic_encryption):
+        """
+        https://api.cloudflare.com/#zone-settings-change-opportunistic-encryption-setting
+        :param zone_id:
+        :param opportunistic_encryption:
+        :return:
+        """
+        uri = "zones/{0}/settings/opportunistic_encryption".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if opportunistic_encryption not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if opportunistic_encryption == "default":
+            set_opportunistic_encryption = "on"
+        else:
+            set_opportunistic_encryption = opportunistic_encryption
+
+        data = {"value": "{0}".format(set_opportunistic_encryption)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_polish_setting(self, zone_id, polish):
+        """
+        https://api.cloudflare.com/#zone-settings-change-polish-setting
+        :param zone_id:
+        :param polish:
+        :return:
+        """
+        uri = "zones/{0}/settings/polish".format(zone_id)
+        valid_values = ["default", "lossless", "lossy"]
+
+        if polish not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if polish == "default":
+            set_polish = "off"
+        else:
+            set_polish = polish
+
+        data = {"value": "{0}".format(set_polish)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_prefetch_preload_setting(self, zone_id, prefetch_preload):
+        """
+        https://api.cloudflare.com/#zone-settings-change-prefetch-preload-setting
+        :param zone_id:
+        :param prefetch_preload:
+        :return:
+        """
+        uri = "zones/{0}/settings/prefetch_preload".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if prefetch_preload not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if prefetch_preload == "default":
+            set_prefetch_preload = "off"
+        else:
+            set_prefetch_preload = prefetch_preload
+
+        data = {"value": "{0}".format(set_prefetch_preload)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_response_buffering_setting(self, zone_id, response_buffering):
+        """
+        https://api.cloudflare.com/#zone-settings-change-response-buffering-setting
+        :param zone_id:
+        :param response_buffering:
+        :return:
+        """
+        uri = "zones/{0}/settings/response_buffering".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if response_buffering not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if response_buffering == "default":
+            set_response_buffering = "off"
+        else:
+            set_response_buffering = response_buffering
+
+        data = {"value": "{0}".format(set_response_buffering)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_rocket_loader_setting(self, zone_id, rocket_loader):
+        """
+        https://api.cloudflare.com/#zone-settings-change-rocket-loader-setting
+        :param zone_id:
+        :param rocket_loader:
+        :return:
+        """
+        uri = "zones/{0}/settings/rocket_loader".format(zone_id)
+        valid_values = ["default", "on", "off", "manual"]
+
+        if rocket_loader not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if rocket_loader == "default":
+            set_rocket_loader = "off"
+        else:
+            set_rocket_loader = rocket_loader
+
+        data = {"value": "{0}".format(set_rocket_loader)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_security_header_setting(self, zone_id, security_header):
+        """
+        https://api.cloudflare.com/#zone-settings-change-security-header-hsts-setting
+        :param zone_id:
+        :param security_header:
+        :return:
+        """
+        uri = "zones/{0}/settings/rocket_loader".format(zone_id)
+
+        set_security_header = security_header
+
+        data = {"value": "{0}".format(set_security_header)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_ssecurity_level_setting(self, zone_id, security_level):
+        """
+        https://api.cloudflare.com/#zone-settings-change-security-level-setting
+        :param zone_id:
+        :param security_level:
+        :return:
+        """
+        uri = "zones/{0}/settings/security_level".format(zone_id)
+        valid_values = ["default", "essentially_off", "low", "medium", "high", "under_attack"]
+
+        if security_level not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if security_level == "default":
+            set_security_level = "medium"
+        else:
+            set_security_level = security_level
+
+        data = {"value": "{0}".format(set_security_level)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_server_side_exclude_setting(self, zone_id, server_side_exclude):
+        """
+        https://api.cloudflare.com/#zone-settings-change-server-side-exclude-setting
+        :param zone_id:
+        :param server_side_exclude:
+        :return:
+        """
+        uri = "zones/{0}/settings/server_side_exclude".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if server_side_exclude not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if server_side_exclude == "default":
+            set_server_side_exclude = "on"
+        else:
+            set_server_side_exclude = server_side_exclude
+
+        data = {"value": "{0}".format(set_server_side_exclude)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_ssl_setting(self, zone_id, ssl):
+        """
+        https://api.cloudflare.com/#zone-settings-change-ssl-setting
+        :param zone_id:
+        :param ssl:
+        :return:
+        """
+        uri = "zones/{0}/settings/ssl".format(zone_id)
+        valid_values = ["default", "off", "flexible", "full", "full_strict"]
+
+        if ssl not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if ssl == "default":
+            set_ssl = "off"
+        else:
+            set_ssl = ssl
+
+        data = {"value": "{0}".format(set_ssl)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_tls_client_auth_setting(self, zone_id, tls_client_auth):
+        """
+        https://api.cloudflare.com/#zone-settings-change-tls-client-auth-setting
+        :param zone_id:
+        :param tls_client_auth:
+        :return:
+        """
+        uri = "zones/{0}/settings/tls_client_auth".format(zone_id)
+
+        set_tls_client_auth = tls_client_auth
+
+        data = {"value": "{0}".format(set_tls_client_auth)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_true_client_ip_header_setting(self, zone_id, true_client_ip_header):
+        """
+        https://api.cloudflare.com/#zone-settings-change-true-client-ip-setting
+        :param zone_id:
+        :param true_client_ip_header:
+        :return:
+        """
+        uri = "zones/{0}/settings/true_client_ip_header".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if true_client_ip_header not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if true_client_ip_header == "default":
+            set_true_client_ip_header = "off"
+        else:
+            set_true_client_ip_header = true_client_ip_header
+
+        data = {"value": "{0}".format(set_true_client_ip_header)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_tls_1_2_only_setting(self, zone_id, tls_1_2_only):
+        """
+        https://api.cloudflare.com/#zone-settings-change-tls-1.2-setting
+        :param zone_id:
+        :param tls_1_2_only:
+        :return:
+        """
+        uri = "zones/{0}/settings/tls_1_2_only".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if tls_1_2_only not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if tls_1_2_only == "default":
+            set_tls_1_2_only = "off"
+        else:
+            set_tls_1_2_only = tls_1_2_only
+
+        data = {"value": "{0}".format(set_tls_1_2_only)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_tls_1_3_setting(self, zone_id, tls_1_3):
+        """
+        https://api.cloudflare.com/#zone-settings-change-tls-1.3-setting
+        :param zone_id:
+        :param tls_1_3:
+        :return:
+        """
+        uri = "zones/{0}/settings/tls_1_3".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if tls_1_3 not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if tls_1_3 == "default":
+            set_tls_1_3 = "off"
+        else:
+            set_tls_1_3 = tls_1_3
+
+        data = {"value": "{0}".format(set_tls_1_3)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_waf_setting(self, zone_id, waf):
+        uri = "zones/{0}/settings/waf".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if waf not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if waf == "default":
+            set_waf = "off"
+        else:
+            set_waf = waf
+
+        data = {"value": "{0}".format(set_waf)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
+
+    def change_websockets_setting(self, zone_id, websockets):
+        """
+        https://api.cloudflare.com/#zone-settings-change-websockets-setting
+        :param zone_id:
+        :param websockets:
+        :return:
+        """
+        uri = "zones/{0}/settings/opportunistic_encryption".format(zone_id)
+        valid_values = ["default", "on", "off"]
+
+        if websockets not in valid_values:
+            raise self.WRAPPERError('valid values: {0}'.format(valid_values))
+
+        if websockets == "default":
+            set_websockets = "off"
+        else:
+            set_websockets = websockets
+
+        data = {"value": "{0}".format(set_websockets)}
+
+        set_settings = self.api_call_patch(uri, data)
+        if set_settings['success']:
+            return set_settings['result']
+        else:
+            return "Error", set_settings['errors']
 
     ################################################################
     #  DNS (https://api.cloudflare.com/#dns-records-for-a-zone)    #
@@ -498,14 +995,17 @@ class CloudFlare(object):
                            name=False,
                            ttl=False):
         uri = "zones/" + str(zone_id) + "/dns_records/" + str(record_id)
+        valid_values_proxied = [False, 'false', 'true']
+        valid_values_ttl = [False, 1, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200]
         change_list = dict()
-        change_list['proxied'] = proxied if proxied in (False, 'false', 'true') else self.halt(
-            'FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: ("false", "true" in quotes!)')
+        if proxied not in valid_values_proxied:
+            raise self.WRAPPERError('valid values: "false", "true" in quotes!')
+        if ttl not in valid_values_ttl:
+            raise self.WRAPPERError('valid values: 1 - Automatic, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200')
+        change_list['proxied'] = proxied
         change_list['content'] = content
         change_list['name'] = name
-        change_list['ttl'] = ttl if ttl in (
-        False, 1, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200) else self.halt(
-            'FREE(Y), PRO(Y), BUSINESS(Y), ENTERPRISE(Y); valid values: (1 - Automatic, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200)')
+        change_list['ttl'] = ttl
 
         #  First, fetch data for the record
         for i in self.dns_records(zone_id):
