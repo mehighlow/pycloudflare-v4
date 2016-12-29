@@ -47,7 +47,7 @@ A ***HUMAN READABLE*** and ***SCRIPTING EASY*** Python wrapper for CloudFlare AP
     - [x] List DNS records(https://api.cloudflare.com/#dns-records-for-a-zone-list-dns-records)
     - [x] Create DNS record(https://api.cloudflare.com/#dns-records-for-a-zone-create-dns-record)
     - [x] Update DNS record(https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record)
-    - [ ] Delete DNS record (https://api.cloudflare.com/#dns-records-for-a-zone-delete-dns-record)
+    - [x] Delete DNS record (https://api.cloudflare.com/#dns-records-for-a-zone-delete-dns-record)
 - Cloudflare IPs
     - [x] CloudFlare IPs (https://api.cloudflare.com/#cloudflare-ips-properties)
 
