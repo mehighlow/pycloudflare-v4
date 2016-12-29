@@ -4,3 +4,4 @@ __init__.pyc
 api.pyc
 .idea
 domains.yml
+domains_management.py
