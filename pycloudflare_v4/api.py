@@ -38,12 +38,12 @@ class CloudFlare(object):
                 requests.TooManyRedirects) as e:
             raise self.CONNError(str(e))
         try:
-            data = json.loads(r.text)
+            api_result = json.loads(r.text)
         except ValueError:
             raise self.APIError('JSON parse failed.')
-        if data['result'] == 'error':
-            raise self.APIError(data['msg'])
-        return data
+        if api_result['result'] == 'error':
+            raise self.APIError(api_result['msg'])
+        return api_result
 
     def api_call_post(self, url, data=None):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
@@ -56,12 +56,12 @@ class CloudFlare(object):
                 requests.TooManyRedirects) as e:
             raise self.CONNError(str(e))
         try:
-            data = json.loads(r.text)
+            api_result = json.loads(r.text)
         except ValueError:
             raise self.APIError('JSON parse failed.')
-        if data['result'] == 'error':
-            raise self.APIError(data['msg'])
-        return data
+        if api_result['result'] == 'error':
+            raise self.APIError(api_result['msg'])
+        return api_result
 
     def api_call_delete(self, uri, data='{}'):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
@@ -74,12 +74,12 @@ class CloudFlare(object):
                 requests.TooManyRedirects) as e:
             raise self.CONNError(str(e))
         try:
-            data = json.loads(r.text)
+            api_result = json.loads(r.text)
         except ValueError:
             raise self.APIError('JSON parse failed.')
-        if data['result'] == 'error':
-            raise self.APIError(data['msg'])
-        return data
+        if not api_result['success']:
+            raise self.APIError(api_result['errors'])
+        return api_result
 
     def api_call_patch(self, uri, data='{}'):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
@@ -92,12 +92,12 @@ class CloudFlare(object):
                 requests.TooManyRedirects) as e:
             raise self.CONNError(str(e))
         try:
-            data = json.loads(r.text)
+            api_result = json.loads(r.text)
         except ValueError:
             raise self.APIError('JSON parse failed.')
-        if data['result'] == 'error':
-            raise self.APIError(data['msg'])
-        return data
+        if api_result['result'] == 'error':
+            raise self.APIError(api_result['msg'])
+        return api_result
 
     def api_call_put(self, uri, data='{}'):
         headers = {'X-Auth-Email': self.EMAIL, 'X-Auth-Key': self.TOKEN, 'Content-Type': 'application/json'}
@@ -110,14 +110,14 @@ class CloudFlare(object):
                 requests.TooManyRedirects) as e:
             raise self.CONNError(str(e))
         try:
-            data = json.loads(r.text)
+            api_result = json.loads(r.text)
         except ValueError:
             raise self.APIError('JSON parse failed.')
-        if data['result'] == 'error':
-            raise self.APIError(data['msg'])
-        elif data['errors']:
-            raise self.APIError(str(data['errors']))
-        return data
+        if api_result['result'] == 'error':
+            raise self.APIError(api_result['msg'])
+        elif api_result['errors']:
+            raise self.APIError(str(api_result['errors']))
+        return api_result
 
     ################################################################
     #  Zone (https://api.cloudflare.com/#zone)                     #
@@ -464,7 +464,7 @@ class CloudFlare(object):
         :param hotlink_protection:
         :return:
         """
-        uri = "zones/{0}/settings/hotlink_protection".format(zone_id)
+        uri = "zones/{0}/settings/ip_geolocation".format(zone_id)
         valid_values = ["default", "on", "off"]
 
         if ip_geolocation not in valid_values:
@@ -716,7 +716,7 @@ class CloudFlare(object):
         :param security_header:
         :return:
         """
-        uri = "zones/{0}/settings/rocket_loader".format(zone_id)
+        uri = "zones/{0}/settings/security_header".format(zone_id)
 
         set_security_header = security_header
 
@@ -930,7 +930,7 @@ class CloudFlare(object):
         :param websockets:
         :return:
         """
-        uri = "zones/{0}/settings/opportunistic_encryption".format(zone_id)
+        uri = "zones/{0}/settings/websockets".format(zone_id)
         valid_values = ["default", "on", "off"]
 
         if websockets not in valid_values:
@@ -974,10 +974,19 @@ class CloudFlare(object):
                         records.append(i)
         return records
 
-    # Create record (https://api.cloudflare.com/#dns-records-for-a-zone-create-dns-record)
-    def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1):
+    def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1, record_proxied=False):
+        """
+        https://api.cloudflare.com/#dns-records-for-a-zone-create-dns-record
+        :param zone_id:
+        :param record_type:
+        :param record_name:
+        :param record_content:
+        :param record_ttl:
+        :param record_proxied:
+        :return:
+        """
         uri = "zones/" + str(zone_id) + "/dns_records/"
-        data = {"type": record_type, "name": record_name, "content": record_content, "ttl": record_ttl}
+        data = {"type": record_type, "name": record_name, "content": record_content, "ttl": record_ttl, "proxied": bool(record_proxied) }
         create_record = self.api_call_post(uri, data)
 
         if create_record['success']:
@@ -985,12 +994,21 @@ class CloudFlare(object):
         else:
             return "Error", create_record['errors']
 
-    # Update record (https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record)
     def dns_records_update(self, zone_id, record_id,
                            proxied=False,
                            content=False,
                            name=False,
                            ttl=False):
+        """
+        https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record
+        :param zone_id:
+        :param record_id:
+        :param proxied:
+        :param content:
+        :param name:
+        :param ttl:
+        :return:
+        """
         uri = "zones/" + str(zone_id) + "/dns_records/" + str(record_id)
         valid_values_proxied = [False, 'false', 'true']
         valid_values_ttl = [False, 1, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200]
@@ -1019,10 +1037,16 @@ class CloudFlare(object):
 
         return self.api_call_put(uri, data)
 
-    # Delete record ()
     def dns_records_delete(self, zone_id, record_id):
-        url = ""
-        pass
+        """
+        https://api.cloudflare.com/#dns-records-for-a-zone-delete-dns-record
+        :param zone_id:
+        :param record_id:
+        :return:
+        """
+        uri = "zones/" + str(zone_id) + "/dns_records/" + str(record_id)
+
+        return self.api_call_delete(uri, data=False)
 
     ##########################################################################
     # CloudFlare IPs (https://api.cloudflare.com/#cloudflare-ips-properties) #
