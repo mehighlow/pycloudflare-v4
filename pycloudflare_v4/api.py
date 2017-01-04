@@ -9,6 +9,8 @@ __license__ = 'MIT'
 
 import json
 import requests
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 cf_api_url = "https://api.cloudflare.com/client/v4/"
 
@@ -974,7 +976,7 @@ class CloudFlare(object):
                         records.append(i)
         return records
 
-    def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1, record_proxied=False):
+    def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1, record_proxied=False, record_priority=False):
         """
         https://api.cloudflare.com/#dns-records-for-a-zone-create-dns-record
         :param zone_id:
@@ -987,6 +989,8 @@ class CloudFlare(object):
         """
         uri = "zones/" + str(zone_id) + "/dns_records/"
         data = {"type": record_type, "name": record_name, "content": record_content, "ttl": record_ttl, "proxied": bool(record_proxied) }
+        if record_type == 'MX':
+            data['priority'] = record_priority
         create_record = self.api_call_post(uri, data)
 
         if create_record['success']:
