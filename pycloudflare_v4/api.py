@@ -9,8 +9,6 @@ __license__ = 'MIT'
 
 import json
 import requests
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
 cf_api_url = "https://api.cloudflare.com/client/v4/"
 
@@ -1002,7 +1000,8 @@ class CloudFlare(object):
                            proxied=False,
                            content=False,
                            name=False,
-                           ttl=False):
+                           ttl=False,
+                           priority=False):
         """
         https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record
         :param zone_id:
@@ -1011,6 +1010,7 @@ class CloudFlare(object):
         :param content:
         :param name:
         :param ttl:
+        :param priority:
         :return:
         """
         uri = "zones/" + str(zone_id) + "/dns_records/" + str(record_id)
@@ -1019,12 +1019,13 @@ class CloudFlare(object):
         change_list = dict()
         if proxied not in valid_values_proxied:
             raise self.WRAPPERError('valid values: "false", "true" in quotes!')
-        if ttl not in valid_values_ttl:
+        if int(ttl) not in valid_values_ttl:
             raise self.WRAPPERError('valid values: 1 - Automatic, 120, 300, 600, 900, 1800, 2700, 3600, 7200, 18000, 43200')
         change_list['proxied'] = proxied
         change_list['content'] = content
         change_list['name'] = name
         change_list['ttl'] = ttl
+        change_list['priority'] = priority
 
         #  First, fetch data for the record
         for i in self.dns_records(zone_id):
@@ -1038,7 +1039,6 @@ class CloudFlare(object):
                 data[k] = json.loads(v)  # escape for true/false in proxied settings
             elif v:
                 data[k] = v
-
         return self.api_call_put(uri, data)
 
     def dns_records_delete(self, zone_id, record_id):
