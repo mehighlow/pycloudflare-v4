@@ -131,12 +131,15 @@ class CloudFlare(object):
         :return: dict
         """
         all_zones = {}
-        pages = self.api_call_get("zones")['result_info']['total_pages']
-        for p in xrange(pages):
+        pages = self.api_call_get("zones&per_page=50")['result_info']['total_pages']
+        for p in range(1, (pages+1)):
             zones = self.api_call_get("zones&page={0}&per_page=50".format(p))
             if zones['success']:
                 for i in zones['result']:
                     all_zones[i['name']] = i
+            else:
+                raise self.APIError(str(zones['errors']))
+
         return all_zones
 
     # Purge all cache for the zone
