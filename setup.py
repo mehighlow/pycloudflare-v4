@@ -5,7 +5,7 @@ from setuptools import find_packages
 
 setup(
     name='pycloudflare-v4',
-    version='0.8.2',
+    version='0.8.3',
     description='Python wrapper for CloudFlare API v4',
     url='https://github.com/zmgit/pycloudflare-v4',
     author='Michael Zaglada',
