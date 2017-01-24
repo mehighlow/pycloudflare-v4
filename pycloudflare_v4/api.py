@@ -964,17 +964,26 @@ class CloudFlare(object):
         :return: list
         """
         record_types = ["A", "AAAA", "CNAME", "TXT", "SRV", "LOC", "MX", "NS", "SPF"]  # all available record types
-        page = 1  # initial page to start with
         records = []
-        for rt in record_types:
-            uri = "zones/" + str(zone_id) + "/dns_records?type={type}&page={page}&per_page=100".format(type=rt,
-                                                                                                       page=page)
-            for p in xrange(self.api_call_get(uri)['result_info']['total_pages']):
-                page = p + 1
-                dns_records = self.api_call_get(uri, page)
+        record_types_pages = {}
+
+        for record_type in record_types:
+            """Get the number of pages for each record type"""
+            uri_get_pages = "zones/" + str(zone_id) + "/dns_records?type={type}&per_page=100".format(type=record_type)
+            record_types_pages[record_type] = self.api_call_get(uri_get_pages)['result_info']['total_pages']
+
+        for record_type in record_types:
+            for page in range(1, (record_types_pages[record_type] + 1)):
+                uri = "zones/" + str(zone_id) + "/dns_records?type={type}&page={page}&per_page=100".format(
+                    type=record_type,
+                    page=page)
+
+                dns_records = self.api_call_get(uri)
                 if dns_records['success']:
                     for i in dns_records['result']:
                         records.append(i)
+                else:
+                    raise self.APIError(str(dns_records['errors']))
         return records
 
     def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1, record_proxied=False, record_priority=False):
