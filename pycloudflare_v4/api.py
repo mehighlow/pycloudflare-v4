@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 __title__ = 'pycloudflare-v4'
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 __author__ = 'Michael Zaglada'
 __email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
@@ -131,7 +131,12 @@ class CloudFlare(object):
         :return: dict
         """
         all_zones = {}
-        pages = self.api_call_get("zones&per_page=50")['result_info']['total_pages']
+        try:
+            intermediate_result = self.api_call_get("zones&per_page=50")
+        except BaseException as e:
+            raise self.APIError(str(e))
+
+        pages = intermediate_result['result_info']['total_pages']
         for p in range(1, (pages+1)):
             zones = self.api_call_get("zones&page={0}&per_page=50".format(p))
             if zones['success']:
@@ -970,7 +975,12 @@ class CloudFlare(object):
         for record_type in record_types:
             """Get the number of pages for each record type"""
             uri_get_pages = "zones/" + str(zone_id) + "/dns_records?type={type}&per_page=100".format(type=record_type)
-            record_types_pages[record_type] = self.api_call_get(uri_get_pages)['result_info']['total_pages']
+            try:
+                intermediate_result = self.api_call_get(uri_get_pages)
+            except BaseException as e:
+                raise self.APIError(str(e))
+
+            record_types_pages[record_type] = intermediate_result['result_info']['total_pages']
 
         for record_type in record_types:
             for page in range(1, (record_types_pages[record_type] + 1)):
