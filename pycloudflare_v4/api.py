@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 __title__ = 'pycloudflare-v4'
-__version__ = '0.8.3'
+__version__ = '0.8.4'
 __author__ = 'Michael Zaglada'
 __email__ = "zmpbox@gmail.com"
 __license__ = 'MIT'
@@ -996,7 +996,8 @@ class CloudFlare(object):
                     raise self.APIError(str(dns_records['errors']))
         return records
 
-    def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1, record_proxied=False, record_priority=False):
+    def dns_records_create(self, zone_id, record_type, record_name, record_content, record_ttl=1, record_proxied=False,
+                           record_priority=False):
         """
         https://api.cloudflare.com/#dns-records-for-a-zone-create-dns-record
         :param zone_id:
@@ -1005,18 +1006,32 @@ class CloudFlare(object):
         :param record_content:
         :param record_ttl:
         :param record_proxied:
+        :param record_priority:
         :return:
         """
         uri = "zones/" + str(zone_id) + "/dns_records/"
-        data = {"type": record_type, "name": record_name, "content": record_content, "ttl": record_ttl, "proxied": bool(record_proxied) }
+        data = {"type": record_type,
+                "name": record_name,
+                "content": record_content,
+                "ttl": record_ttl,
+                "proxied": True
+                }
+
+        if record_proxied in ['true', 'True', 1]:
+            data['proxied'] = json.loads('true')
+
+        if record_proxied in ['false', 'False', 0]:
+            data['proxied'] = json.loads('false')
+
         if record_type == 'MX':
             data['priority'] = record_priority
+
         create_record = self.api_call_post(uri, data)
 
         if create_record['success']:
             return create_record['result']
         else:
-            return "Error", create_record['errors']
+            raise self.APIError(str(create_record['errors']))
 
     def dns_records_update(self, zone_id, record_id,
                            proxied=False,
