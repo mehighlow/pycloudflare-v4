@@ -2,7 +2,7 @@
 A ***HUMAN READABLE*** and ***SCRIPTING EASY*** Python wrapper for CloudFlare API v4
 
 ## *Current Version:*
--  0.8.3
+-  0.8.4
 
 ## *Covered Methods:*
 
